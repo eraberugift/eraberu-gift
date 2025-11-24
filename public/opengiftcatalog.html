@@ -1,0 +1,708 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>ギフトをえらぶ | えらべるギフト</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg: #f1ece8;
+      --ink: #2b2b2b;
+      --muted: #7a7268;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --card-w: min(340px, 82vw);
+    }
+
+    *{ box-sizing:border-box; }
+
+    /* ▼ フェードイン（0.9秒） ▼ */
+    body{
+      margin:0;
+      background:var(--bg);
+      font-family:"Noto Sans JP","Hiragino Sans","-apple-system",system-ui,sans-serif;
+      color:var(--ink);
+      -webkit-font-smoothing:antialiased;
+      opacity:0;
+      transition: opacity .9s ease;
+    }
+    body.is-visible{
+      opacity:1;
+    }
+    /* ▲ フェードイン ▲ */
+
+    .app{
+      max-width:480px;
+      margin:0 auto;
+      padding:24px 16px calc(24px + var(--safe-bottom));
+    }
+
+    .header{
+      text-align:center;
+      margin-bottom:28px;
+    }
+
+    .title{
+      font-size:26px;
+      letter-spacing:.16em;
+      text-transform:uppercase;
+      font-weight:700;
+    }
+
+    .caption{
+      margin-top:6px;
+      font-size:11px;
+      letter-spacing:.1em;
+      text-transform:uppercase;
+      color:var(--muted);
+    }
+
+    /* ===== カルーセル（余白なし & 中央寄せ）===== */
+
+    .bleed{
+      width:100vw;
+      margin-left:50%;
+      transform:translateX(-50%);
+    }
+
+    .gift-wrap{
+      margin-top:12px;
+    }
+
+    .gift-list{
+      display:flex;
+      gap:18px;
+      overflow-x:auto;
+      scroll-snap-type:x mandatory;
+      -webkit-overflow-scrolling:touch;
+      padding:8px 0 22px;
+      scrollbar-width:none;
+    }
+
+    .gift-list::-webkit-scrollbar{
+      display:none;
+    }
+
+    .gift-list::before,
+    .gift-list::after{
+      content:"";
+      flex:0 0 calc((100vw - var(--card-w)) / 2);
+    }
+
+    .gift-item{
+      flex:0 0 var(--card-w);
+      scroll-snap-align:center;
+      cursor:pointer;
+      transition:opacity .12s ease;
+    }
+
+    /* この画面では選択状態による濃淡は付けないので統一 */
+    .gift-item:not(.selected){
+      opacity:1;
+    }
+
+    /* ===== 写真枠 ＋ くすみ＆粒子 ===== */
+    .photo-frame{
+      width:100%;
+      aspect-ratio:1 / 1;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:transparent;
+      border:none;
+      overflow:visible;
+      position:relative;
+    }
+
+    .photo-frame img{
+      width:86%;
+      height:86%;
+      object-fit:cover;
+      background:#fff;
+      border:1px solid #111;
+      box-sizing:border-box;
+      display:block;
+      filter:
+        saturate(0.9)
+        contrast(0.85)
+        brightness(1.03);
+    }
+
+    .photo-frame::after{
+      content:"";
+      position:absolute;
+      inset:7%;
+      pointer-events:none;
+      mix-blend-mode:soft-light;
+      opacity:.6;
+      background-image:
+        radial-gradient(circle at 0 0, rgba(0,0,0,.18) 0, transparent 55%),
+        radial-gradient(circle at 100% 0, rgba(0,0,0,.12) 0, transparent 55%),
+        radial-gradient(circle at 0 100%, rgba(0,0,0,.14) 0, transparent 55%),
+        radial-gradient(circle at 100% 100%, rgba(0,0,0,.16) 0, transparent 55%);
+      background-size:18px 18px;
+    }
+
+    .info{
+      margin-top:10px;
+    }
+
+    .gift-name{
+      font-size:15px;
+      font-weight:600;
+      margin-bottom:12px;  /* タイトルと「選んだ理由」の間をきれいに */
+    }
+
+    .gift-meta{
+      font-size:12px;
+      color:var(--muted);
+      letter-spacing:.04em;
+      margin-bottom:2px;
+    }
+
+    .gift-note{
+      font-size:12px;
+      color:#4a433b;
+      line-height:1.6;
+      margin-top:4px;
+      margin-bottom:12px;
+    }
+
+    /* カードごとの「詳細を見る」ボタン＋短いライン */
+    .detail-wrap{
+      text-align:center;
+      margin-top:12px;
+    }
+
+    .btn-secondary{
+      border:none;
+      background:none;
+      padding:4px 0;
+      font-size:12px;
+      letter-spacing:.14em;
+      text-transform:uppercase;
+      color:#2b2b2b;
+      cursor:pointer;
+    }
+
+    .btn-secondary:active{
+      transform:translateY(1px);
+    }
+
+    .detail-divider{
+      width:46%;
+      height:1px;
+      margin:4px auto 0;
+      background:linear-gradient(
+        90deg,
+        rgba(0,0,0,.02),
+        rgba(0,0,0,.20),
+        rgba(0,0,0,.02)
+      );
+    }
+
+    .pager{
+      margin-top:16px;
+      display:flex;
+      justify-content:center;
+      gap:8px;
+    }
+
+    .pager-dot{
+      width:6px;
+      height:6px;
+      border-radius:50%;
+      background:#d3c9c0;
+      transition:transform .12s ease, background-color .12s ease;
+    }
+
+    /* アクティブ時だけ濃く＆少し大きく */
+    .pager-dot.is-active{
+      background:#2b2b2b;
+      transform:scale(1.35);
+    }
+
+    /* ===== モーダル共通 ===== */
+    body.is-modal-open{
+      overflow:hidden;
+    }
+
+    .modal-backdrop{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.22);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px 16px;
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .22s ease;
+      z-index:40;
+    }
+
+    .modal-backdrop.is-open{
+      opacity:1;
+      pointer-events:auto;
+    }
+
+    .modal-dialog{
+      max-width:360px;
+      width:100%;
+      background:#f9f4ee;
+      border-radius:18px;
+      box-shadow:0 18px 40px rgba(0,0,0,.22);
+      padding:18px 18px 20px;
+      position:relative;
+    }
+
+    .modal-close{
+      position:absolute;
+      top:10px;
+      right:10px;
+      border:none;
+      background:transparent;
+      font-size:18px;
+      line-height:1;
+      cursor:pointer;
+      color:#766a5f;
+    }
+
+    .modal-name{
+      font-size:15px;
+      font-weight:600;
+      margin-bottom:8px;
+    }
+
+    .modal-short{
+      font-size:13px;
+      line-height:1.7;
+      color:#4a433b;
+      margin-bottom:10px;
+    }
+
+    .modal-separator{
+      height:1px;
+      width:100%;
+      background:linear-gradient(90deg, rgba(0,0,0,.06), rgba(0,0,0,.18), rgba(0,0,0,.06));
+      margin:8px 0 12px;
+    }
+
+    .modal-long{
+      font-size:13px;
+      line-height:1.8;
+      color:#4a433b;
+      margin-bottom:16px;
+      white-space:pre-wrap;
+    }
+
+    .modal-footer{
+      display:flex;
+      justify-content:flex-end;
+      gap:8px;
+      margin-top:4px;
+    }
+
+    .btn-primary{
+      flex:1;
+      background:#000;
+      color:#fff;
+      border:none;
+      border-radius:999px;
+      padding:13px;
+      font-size:14px;
+      font-weight:600;
+      letter-spacing:.14em;
+      text-transform:uppercase;
+      cursor:pointer;
+      box-shadow:0 10px 22px rgba(0,0,0,.16);
+    }
+
+    .btn-primary:active{
+      transform:translateY(1px);
+    }
+
+    /* 確認モーダル用のボタン */
+    .btn-outline{
+      flex:1;
+      background:#f9f4ee;
+      color:#2b2b2b;
+      border-radius:999px;
+      border:1px solid rgba(0,0,0,.16);
+      padding:11px;
+      font-size:13px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      cursor:pointer;
+    }
+
+    .btn-outline:active{
+      transform:translateY(1px);
+    }
+
+    .confirm-title{
+      font-size:15px;
+      font-weight:600;
+      margin-bottom:8px;
+      text-align:center;
+    }
+
+    .confirm-text{
+      font-size:13px;
+      line-height:1.7;
+      color:#4a433b;
+      margin-bottom:16px;
+      text-align:center;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app">
+
+    <header class="header">
+      <div class="title">SELECT A GIFT</div>
+      <div class="caption">CHOOSE ONE FROM THREE</div>
+    </header>
+
+    <main class="gift-wrap bleed">
+      <div class="gift-list" id="giftList">
+
+        <!-- A -->
+        <div class="gift-item" data-id="1"
+             data-short="透け感のあるティントで、校則の範囲でもさりげなく血色感をプラスできるリップです。"
+             data-long="ほんのり色づくティントタイプのリップクリームです。しっとり保湿しながらもベタつきにくいテクスチャーで、長時間つけていてもストレスになりにくいのが特徴。  
+透明感のあるカラーなので、学校や塾など“あまりメイクできないけれど、少しだけ可愛くしたい日”にもぴったりです。  
+ポーチに入れておいて、休み時間や放課後にささっと塗り直せるサイズ感とデザインにこだわりました。">
+          <div class="photo-frame">
+            <img src="https://prcdn.freetls.fastly.net/release_image/127171/14/127171-14-1ca18a577656f4ce4b03eca3f0a22bf3-1080x1080.png?width=1950&height=1350&quality=85%2C65&format=jpeg&auto=webp&fit=bounds&bg-color=fff" alt="gift A">
+          </div>
+          <div class="info">
+            <div class="gift-name">リップクリーム（Tint Lip / 透明感カラー）</div>
+            <div class="gift-meta">選んだ理由</div>
+            <div class="gift-note">
+              最近乾燥してるって言ってたし、この色なら普段使いできて絶対似合うと思って選んだよ！<br>
+              ほんのり色づくタイプだから、学校でも使えそうだなって思って♡
+            </div>
+            <div class="detail-wrap">
+              <button class="btn-secondary detail-button" type="button">詳細を見る</button>
+              <div class="detail-divider"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- B -->
+        <div class="gift-item" data-id="2"
+             data-short="ふんわり香るホワイトムスクで、手をケアしながら気分もふわっと上がるハンドクリームです。"
+             data-long="しっとりとした保湿力がありながら、ベタつきにくく、ノートやスマホに触れるときも気になりにくいテクスチャーのハンドクリームです。  
+ホワイトムスクのやさしい香りが、勉強の合間や部活帰りのリフレッシュタイムにぴったり。  
+香りが強すぎないので教室でも使いやすく、“いい匂いするね”って会話のきっかけにもなりそうなアイテムです。">
+          <div class="photo-frame">
+            <img src="https://images.pexels.com/photos/4465125/pexels-photo-4465125.jpeg?auto=compress&cs=tinysrgb&w=800" alt="gift B">
+          </div>
+          <div class="info">
+            <div class="gift-name">ハンドクリーム（ホワイトムスク / ほんのり香り）</div>
+            <div class="gift-meta">選んだ理由</div>
+            <div class="gift-note">
+              最近一緒に手荒れの話してたし、いい香りで気分上がるやつをプレゼントしたかった！<br>
+              勉強中とか部活帰りとか、ふとした時に使ってくれたら嬉しいな〜って思って選んだよ。
+            </div>
+            <div class="detail-wrap">
+              <button class="btn-secondary detail-button" type="button">詳細を見る</button>
+              <div class="detail-divider"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- C -->
+        <div class="gift-item" data-id="3"
+             data-short="リップやミラー、小物をまとめて持ち歩ける、毎日の相棒にちょうどいいサイズのミニポーチです。"
+             data-long="コスメや小さな雑貨をすっきり収納できるミニサイズのポーチです。  
+リップ・鏡・目薬・常備薬など、バラバラになりがちな小物をまとめておけるので、カバンの中を開けたときも整って見えるのがポイント。  
+学校用バッグにも休日のお出かけ用ショルダーにも収まりやすい大きさで、“いつも一緒にいる相棒”のように使ってもらえるイメージでセレクトしました。">
+          <div class="photo-frame">
+            <img src="https://item-shopping.c.yimg.jp/i/n/fashiongoodsstores_fggs190401" alt="gift C">
+          </div>
+          <div class="info">
+            <div class="gift-name">ミニポーチ（メイク・小物入れ）</div>
+            <div class="gift-meta">選んだ理由</div>
+            <div class="gift-note">
+              いつもバッグの中が可愛いって思ってて、小物をまとめられるポーチがあったら便利かなって思って選んだよ！<br>
+              学校にも遊びにも使えるサイズだから、たくさん使ってね♡
+            </div>
+            <div class="detail-wrap">
+              <button class="btn-secondary detail-button" type="button">詳細を見る</button>
+              <div class="detail-divider"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <div class="pager">
+      <span class="pager-dot is-active" data-id="1"></span>
+      <span class="pager-dot" data-id="2"></span>
+      <span class="pager-dot" data-id="3"></span>
+    </div>
+
+    <!-- ▼ 詳細モーダル ▼ -->
+    <div class="modal-backdrop" id="giftModal">
+      <div class="modal-dialog">
+        <button class="modal-close" type="button" data-role="close">×</button>
+
+        <div class="modal-body">
+          <div class="modal-name"></div>
+          <div class="modal-short"></div>
+          <div class="modal-separator"></div>
+          <div class="modal-long"></div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-primary" type="button" id="chooseButton">
+            このギフトにする
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- ▲ 詳細モーダル ▲ -->
+
+    <!-- ▼ 確認モーダル ▼ -->
+    <div class="modal-backdrop" id="confirmModal">
+      <div class="modal-dialog">
+        <button class="modal-close" type="button" data-role="confirm-close">×</button>
+
+        <p class="confirm-title">このギフトでよろしいですか？</p>
+        <p class="confirm-text">
+          このギフトがプレゼントとして送られます。
+        </p>
+
+        <div class="modal-footer">
+          <button class="btn-outline" type="button" id="confirmBack">
+            まちがえたかも
+          </button>
+          <button class="btn-primary" type="button" id="confirmOk">
+            これに決定する
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- ▲ 確認モーダル ▲ -->
+
+  </div>
+
+  <script>
+    // ▼ フェードイン起動
+    window.addEventListener("DOMContentLoaded", () => {
+      requestAnimationFrame(() => {
+        document.body.classList.add("is-visible");
+      });
+    });
+
+    (function(){
+      const items     = Array.from(document.querySelectorAll(".gift-item"));
+      const listEl    = document.getElementById("giftList");
+      const dots      = Array.from(document.querySelectorAll(".pager-dot"));
+
+      // 詳細モーダル関連
+      const modal         = document.getElementById("giftModal");
+      const modalNameEl   = modal.querySelector(".modal-name");
+      const modalShortEl  = modal.querySelector(".modal-short");
+      const modalLongEl   = modal.querySelector(".modal-long");
+      const modalCloseBtn = modal.querySelector("[data-role='close']");
+      const chooseButton  = document.getElementById("chooseButton");
+
+      // 確認モーダル関連
+      const confirmModal   = document.getElementById("confirmModal");
+      const confirmClose   = confirmModal.querySelector("[data-role='confirm-close']");
+      const confirmBackBtn = document.getElementById("confirmBack");
+      const confirmOkBtn   = document.getElementById("confirmOk");
+
+      let selectedId  = "1";
+      let modalCurrentId = null;
+
+      function updateCards(){
+        items.forEach(item=>{
+          item.classList.toggle("selected", item.dataset.id === selectedId);
+        });
+      }
+
+      function updateDots(){
+        dots.forEach(dot=>{
+          dot.classList.toggle("is-active", dot.dataset.id === selectedId);
+        });
+      }
+
+      function setSelected(id, options){
+        options = options || {};
+        if (id === selectedId) return;
+        selectedId = id;
+        updateCards();
+        updateDots();
+
+        if (options.scroll){
+          const target = items.find(it => it.dataset.id === id);
+          if (target){
+            target.scrollIntoView({
+              behavior: options.behavior || "smooth",
+              inline: "center",
+              block: "nearest"
+            });
+          }
+        }
+      }
+
+      // カード全体クリック → モーダルを開く
+      items.forEach(item=>{
+        item.addEventListener("click", ()=>{
+          openModalFromItem(item);
+        });
+      });
+
+      // 「詳細を見る」ボタン（念のため個別にも紐付け）
+      document.querySelectorAll(".detail-button").forEach(btn=>{
+        btn.addEventListener("click", (e)=>{
+          e.stopPropagation();
+          const item = btn.closest(".gift-item");
+          if(!item) return;
+          openModalFromItem(item);
+        });
+      });
+
+      // ドットクリックでスクロール＋インジケータ同期
+      dots.forEach(dot=>{
+        dot.addEventListener("click", ()=>{
+          setSelected(dot.dataset.id, { scroll:true, behavior:"smooth" });
+        });
+      });
+
+      // スクロールで中央に近いカードを選択扱いに
+      let timer;
+      listEl.addEventListener("scroll", ()=>{
+        clearTimeout(timer);
+        timer = setTimeout(()=>{
+          const centerX = listEl.getBoundingClientRect().left + listEl.clientWidth/2;
+          let bestId   = selectedId;
+          let bestDist = Infinity;
+
+          items.forEach(item=>{
+            const r   = item.getBoundingClientRect();
+            const mid = r.left + r.width/2;
+            const d   = Math.abs(mid - centerX);
+            if(d < bestDist){
+              bestDist = d;
+              bestId   = item.dataset.id;
+            }
+          });
+
+          if(bestId !== selectedId){
+            setSelected(bestId);
+          }
+        }, 80);
+      });
+
+      // 詳細モーダルを開く（タイトル＋40字＋400字）
+      function openModalFromItem(item){
+        const id        = item.dataset.id;
+        const name      = item.querySelector(".gift-name").textContent;
+        const shortText = item.dataset.short || "";
+        const longText  = item.dataset.long  || "";
+
+        selectedId = id;
+        updateCards();
+        updateDots();
+
+        modalNameEl.textContent  = name;
+        modalShortEl.textContent = shortText;
+        modalLongEl.textContent  = longText;
+
+        modal.classList.add("is-open");
+        document.body.classList.add("is-modal-open");
+        modalCurrentId = id;
+      }
+
+      // 詳細モーダルを閉じる
+      function closeDetailModal(){
+        modal.classList.remove("is-open");
+        modalCurrentId = null;
+        // is-modal-open は確認モーダルでも使うので、body からはここでは外さない
+        if (!confirmModal.classList.contains("is-open")) {
+          document.body.classList.remove("is-modal-open");
+        }
+      }
+
+      modalCloseBtn.addEventListener("click", closeDetailModal);
+
+      modal.addEventListener("click", (e)=>{
+        if(e.target === modal){
+          closeDetailModal();
+        }
+      });
+
+      // 確認モーダル開閉
+      function openConfirmModal(){
+        confirmModal.classList.add("is-open");
+        document.body.classList.add("is-modal-open");
+      }
+
+      function closeConfirmModal(){
+        confirmModal.classList.remove("is-open");
+        if (!modal.classList.contains("is-open")) {
+          document.body.classList.remove("is-modal-open");
+        }
+      }
+
+      confirmClose.addEventListener("click", closeConfirmModal);
+      confirmBackBtn.addEventListener("click", closeConfirmModal);
+
+      confirmModal.addEventListener("click", (e)=>{
+        if (e.target === confirmModal){
+          closeConfirmModal();
+        }
+      });
+
+      // 「このギフトにする」→ 確認モーダルを表示
+      chooseButton.addEventListener("click", ()=>{
+        if(!modalCurrentId) return;
+        openConfirmModal();
+      });
+
+      // 確認モーダルの「このギフトに決定する」
+      confirmOkBtn.addEventListener("click", ()=>{
+        if(!modalCurrentId) return;
+
+        const item = items.find(it => it.dataset.id === modalCurrentId);
+        if (!item) return;
+
+        const name = item.querySelector(".gift-name")?.textContent || "";
+        const img  = item.querySelector(".photo-frame img")?.src || "";
+
+        const url = "giftfinish.html"
+            + "?gift=" + encodeURIComponent(name)
+            + "&img="  + encodeURIComponent(img);
+
+        location.href = url;
+        });
+
+
+      // 初期表示で最初のカードを中央に
+      const initial = items[0];
+      if(initial){
+        initial.scrollIntoView({
+          behavior:"auto",
+          inline:"center",
+          block:"nearest"
+        });
+      }
+
+      updateCards();
+      updateDots();
+    })();
+  </script>
+
+</body>
+</html>
