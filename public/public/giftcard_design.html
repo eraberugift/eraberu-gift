@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>ギフトをえらぶ | えらべるギフト</title>
+
+  <!-- 落ち着いたサンセリフ -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      /* ===== ベージュトーンの世界観 ===== */
+      --bg:    #e5dfd2;          /* 画面全体の淡いベージュ */
+      --card:  #f8f2e8;          /* カードのクリーム色 */
+      --ink:   #3a3127;          /* 文字のこげ茶 */
+      --muted: #8a8173;          /* サブテキスト用のグレージュ */
+      --radius: 18px;
+      --shadow: 0 14px 30px rgba(0,0,0,.12);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    *{ box-sizing:border-box; }
+
+    html,body{ height:100%; }
+
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--ink);
+      font-family:"Noto Sans JP","Hiragino Sans","-apple-system",system-ui,sans-serif;
+      -webkit-font-smoothing:antialiased;
+      position:relative;  /* ノイズレイヤー用 */
+    }
+
+    /* ざらざらノイズレイヤー（ベージュ背景用） */
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      z-index:-1;
+      opacity:0.35;  /* 粒の強さ：0.25〜0.4くらいで調整してOK */
+
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='noStitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size:140px 140px;
+      mix-blend-mode:soft-light; /* 下のベージュと馴染ませて“くすみ”感 */
+    }
+
+    .app{
+      min-height:100%;
+      max-width:480px;
+      margin:0 auto;
+      padding:24px 16px calc(24px + var(--safe-bottom));
+      display:flex;
+      flex-direction:column;
+    }
+
+    .header{
+      text-align:center;
+      margin-bottom:24px;
+    }
+
+    .title{
+      font-size:26px;
+      letter-spacing:.16em;
+      text-transform:uppercase;
+      font-weight:700;
+      color:#4a4035;  /* 少し濃いブラウンでロゴっぽく */
+    }
+
+    .caption{
+      margin-top:8px;
+      font-size:12px;
+      color:#a59a8b;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+    }
+
+    .gift-list{
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+      flex:1 1 auto;
+    }
+
+    .gift-card{
+      background:var(--card);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:14px 14px 16px;
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+      position:relative;
+      cursor:pointer;
+      transition:
+        transform .12s ease,
+        box-shadow .12s ease,
+        border .12s ease,
+        background .12s ease;
+      border:2px solid transparent;
+    }
+
+    .gift-card:hover{
+      transform:translateY(-2px);
+      box-shadow:0 18px 34px rgba(0,0,0,.14);
+    }
+
+    .gift-card.selected{
+      border-color:#fdf7ed;
+      box-shadow:
+        0 0 0 2px rgba(255,255,255,.3),
+        var(--shadow);
+      background:#fbf5ec;
+    }
+
+    .thumb{
+      flex:0 0 92px;
+      aspect-ratio:4/5;
+      border-radius:14px;
+      overflow:hidden;
+      background:#d4cdc1; /* サムネ用の淡いグレー寄りベージュ */
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:11px;
+      color:#7f7668;
+    }
+
+    .thumb img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+
+    .info{
+      flex:1 1 auto;
+    }
+
+    .gift-name{
+      font-size:15px;
+      font-weight:600;
+      margin-bottom:4px;
+    }
+
+    .gift-meta{
+      font-size:12px;
+      color:var(--muted);
+      margin-bottom:8px;
+    }
+
+    .gift-note{
+      font-size:12px;
+      line-height:1.5;
+      color:#5b5246;
+    }
+
+    .badge{
+      position:absolute;
+      top:10px;
+      left:12px;
+      font-size:10px;
+      letter-spacing:.16em;
+      text-transform:uppercase;
+      padding:3px 6px;
+      border-radius:999px;
+      background:rgba(77,65,55,.96); /* ダークブラウン */
+      color:#fdf7ed;
+    }
+
+    .footer{
+      margin-top:20px;
+    }
+
+    .btn-primary{
+      width:100%;
+      border:none;
+      border-radius:999px;
+      padding:14px;
+      font-size:14px;
+      font-weight:600;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      background:#fdf7ed;
+      color:#3c3329;
+      box-shadow:0 10px 22px rgba(0,0,0,.14);
+      cursor:pointer;
+      transition:
+        transform .12s ease,
+        box-shadow .12s ease,
+        opacity .12s ease;
+    }
+
+    .btn-primary:disabled{
+      opacity:.45;
+      box-shadow:none;
+      cursor:default;
+    }
+
+    .btn-primary:not(:disabled):active{
+      transform:translateY(1px);
+      box-shadow:0 6px 14px rgba(0,0,0,.16);
+    }
+
+    @media (min-width:768px){
+      .app{ padding-top:40px; }
+      .title{ font-size:30px; }
+      .gift-card{ padding:18px 18px 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div class="title">SELECT A GIFT</div>
+      <div class="caption">CHOOSE ONE FROM THREE</div>
+    </header>
+
+    <main class="gift-list">
+      <!-- ギフトA -->
+      <article class="gift-card selected" data-id="1">
+        <span class="badge">A</span>
+        <div class="thumb">
+          Knit
+        </div>
+        <div class="info">
+          <div class="gift-name">ウールクルーネックニット</div>
+          <div class="gift-meta">Beige / Free size</div>
+          <div class="gift-note">
+            肌ざわりの良いウール混ニット。休日のカフェにも、ちょっとしたお出かけにも。
+          </div>
+        </div>
+      </article>
+
+      <!-- ギフトB -->
+      <article class="gift-card" data-id="2">
+        <span class="badge">B</span>
+        <div class="thumb">
+          Tote
+        </div>
+        <div class="info">
+          <div class="gift-name">キャンバストートバッグ</div>
+          <div class="gift-meta">Ecru / Everyday</div>
+          <div class="gift-note">
+            ノートPCとお財布、読みかけの本を入れて、いつもの街歩きにちょうど良いサイズ。
+          </div>
+        </div>
+      </article>
+
+      <!-- ギフトC -->
+      <article class="gift-card" data-id="3">
+        <span class="badge">C</span>
+        <div class="thumb">
+          Watch
+        </div>
+        <div class="info">
+          <div class="gift-name">レザーベルトウォッチ</div>
+          <div class="gift-meta">Brown / 36mm</div>
+          <div class="gift-note">
+            すっきりとした文字盤の腕時計。毎日の時間を、少しだけ特別にしてくれる一本。
+          </div>
+        </div>
+      </article>
+    </main>
+
+    <footer class="footer">
+      <button class="btn-primary" id="submitButton">
+        このギフトをえらぶ
+      </button>
+    </footer>
+  </div>
+
+  <script>
+    (function(){
+      const cards  = document.querySelectorAll(".gift-card");
+      const button = document.getElementById("submitButton");
+      let selectedId = "1"; // 初期選択: A
+
+      function update(){
+        cards.forEach(card => {
+          card.classList.toggle("selected", card.dataset.id === selectedId);
+        });
+        button.disabled = !selectedId;
+      }
+
+      cards.forEach(card => {
+        card.addEventListener("click", () => {
+          selectedId = card.dataset.id;
+          update();
+        });
+      });
+
+      button.addEventListener("click", () => {
+        if(!selectedId) return;
+        console.log("selected gift id:", selectedId);
+        alert("ギフト " + selectedId + " を選びました。（ここに本番処理をつなぎます）");
+      });
+
+      update();
+    })();
+  </script>
+</body>
+</html>
