@@ -194,49 +194,24 @@ document.querySelectorAll("#giftForm input").forEach(input=>{
   input.addEventListener("input", saveDraft);
 });
 
-/* ===== URLパラメータ(id / preview)の引き継ぎ対応 ===== */
-(function(){
-  const src = new URLSearchParams(location.search);
-  const baseParams = new URLSearchParams();
-
-  const keepKeys = ["id", "preview"];
-
-  keepKeys.forEach(key=>{
-    const v = src.get(key);
-    if(v !== null) baseParams.set(key, v);
-  });
-
-  // フォーム送信時、action を書き換えて遷移
-  const form = document.getElementById("giftForm");
-  form.addEventListener("submit", (e)=>{
-    if([ ...baseParams ].length){
-      const qs = baseParams.toString();
-      form.action = "giveselect.html?" + qs;
-    }else{
-      form.action = "giveselect.html";
-    }
-  });
-})();
-
-/* ====== Make Webhook 送信処理 ====== */
+/* ====== Make Webhook 送信処理（テスト用・遷移ナシ） ====== */
 
 const MAKE_WEBHOOK_URL = "https://hook.eu2.make.com/wsqbuvjclpr41aufniwan726z1yap9lx"; 
-// ↑↑ あなたの Make Webhook URL を入れてください
+// ↑ Make の Webhook URL をそのまま貼る
 
 document.getElementById("giftForm").addEventListener("submit", async (e) => {
-  e.preventDefault(); // デフォルトの form 送信を止める
+  e.preventDefault(); // 通常のフォーム送信は止める
 
   const form = document.getElementById("giftForm");
   const data = Object.fromEntries(new FormData(form).entries());
 
-  // カタログID（作成時に発行して保存）
+  // カタログIDを生成（テスト用）
   let catalogId = localStorage.getItem("catalogId");
   if (!catalogId) {
     catalogId = "gift-" + Math.random().toString(36).slice(2, 10);
     localStorage.setItem("catalogId", catalogId);
   }
 
-  // Webhook に送るデータ
   const payload = {
     catalogId: catalogId,
     title1: data.title1 || "",
@@ -248,36 +223,24 @@ document.getElementById("giftForm").addEventListener("submit", async (e) => {
   };
 
   console.log("送信データ:", payload);
+  alert("Make に送信します（コンソールも見てください）");
 
   try {
-    await fetch(MAKE_WEBHOOK_URL, {
+    const res = await fetch(MAKE_WEBHOOK_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     });
-    console.log("Make 送信成功");
+
+    console.log("Make 送信レスポンス:", res.status);
+    alert("Make に送信しました！\nMake の画面で Webhook が緑になっているか確認してね。");
   } catch (err) {
     console.error("Make 送信エラー:", err);
+    alert("Make 送信でエラーが起きました。コンソールを確認してね。");
   }
-
-  /* ----→ 元々の遷移処理をここで継続 ---- */
-
-  const src = new URLSearchParams(location.search);
-  const params = new URLSearchParams();
-
-  ["id", "preview"].forEach(key => {
-    const v = src.get(key);
-    if (v !== null) params.set(key, v);
-  });
-
-  const next = params.toString()
-    ? "giveselect.html?" + params.toString()
-    : "giveselect.html";
-
-  window.location.href = next;
 });
-
 </script>
+
 
 </body>
 </html>
