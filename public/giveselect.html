@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>お届け方法の選択 | えらべるギフト</title>
+<link href="https://fonts.googleapis.com/css2?family=Kosugi+Maru&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --pink:#f58fb1; --ink:#2a2a2a; --muted:#6b7280;
+    --bg-top:#fff1f6; --bg-bottom:#fde9d3;
+    --grad:linear-gradient(90deg,#f08db0 0%,#f2b35e 100%);
+    --card-bg:#fff; --shadow:0 14px 30px rgba(0,0,0,.08); --radius:18px;
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --vh: 1svh;
+    --screenH: calc(var(--vh) * 100);
+  }
+
+  *{box-sizing:border-box}
+  html,body{min-height:100vh;height:auto}
+  body{
+    margin:0;
+    font-family:"Kosugi Maru","Hiragino Maru Gothic ProN","Hiragino Sans","Noto Sans JP",system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+    color:var(--ink);
+    background: linear-gradient(180deg,var(--bg-top),var(--bg-bottom)) fixed;
+    background-size:100% 100%;
+  }
+  a{color:inherit;text-decoration:none}
+
+  .wrap{
+    max-width:960px;
+    margin:0 auto;
+    padding:16px 16px 0;
+    min-height:var(--screenH);
+    display:flex;
+    flex-direction:column;
+  }
+  .main{flex:1;display:flex;flex-direction:column;}
+
+  /* header */
+  .header{display:flex;align-items:center;gap:12px;padding-top:4px;}
+  .logo{width:32px;height:32px;display:flex;align-items:center;justify-content:center;}
+  .brand{font-weight:800;font-size:22px;color:var(--pink);letter-spacing:.02em;}
+
+  /* title */
+  .title{text-align:center;margin:26px 0 14px}
+  h1{
+    font-size:clamp(22px,6.2vw,32px);
+    line-height:1.25;margin:8px 0 12px;
+  }
+  .lead{
+    color:var(--muted);text-align:center;
+    font-size:clamp(14px,2.3vw,16px);
+    line-height:1.9;
+    max-width:620px;margin:0 auto 12px;
+  }
+
+  @media (max-width:600px){
+    .title{margin:40px 0 18px}
+    h1{margin:10px 0 16px}
+    .lead{margin-bottom:18px}
+  }
+
+  /* block */
+  .block{
+    background:rgba(255,255,255,.95);
+    border-radius:20px;
+    box-shadow:0 10px 24px rgba(0,0,0,.04);
+    padding:18px 16px 18px;
+    margin:0 auto 18px;
+    max-width:520px;width:92%;
+  }
+  .block + .block{margin-top:4px;}
+  .block-title{font-size:16px;font-weight:700;margin:0 0 12px;}
+
+  /* option group */
+  .option-group{display:flex;flex-direction:column;gap:10px;}
+
+  .radio-card,
+  .check-card{
+    position:relative;
+    display:flex;gap:10px;align-items:flex-start;
+    padding:14px 16px;border-radius:16px;
+    border:1px solid #f3e7ef;background:#fff;
+    cursor:pointer;
+    transition:border-color .15s,box-shadow .15s,background-color .15s,transform .08s;
+  }
+  .radio-card:hover,.check-card:hover{
+    box-shadow:0 6px 14px rgba(0,0,0,.03);
+    transform:translateY(1px);
+  }
+
+  /* radio active */
+  .radio-card.is-active{
+    border-color:#f8b4cf;
+    box-shadow:0 0 0 1px rgba(245,143,177,.5),0 10px 22px rgba(245,143,177,.16);
+    background:linear-gradient(135deg,#fff9fb,#fff);
+  }
+
+  /* checkbox active */
+  .check-card.is-checked{
+    border-color:#f8b4cf;
+    box-shadow:0 0 0 1px rgba(245,143,177,.5),0 10px 22px rgba(245,143,177,.16);
+    background:linear-gradient(135deg,#fff9fb,#fff);
+  }
+
+  .control{margin-top:2px;flex:0 0 auto;}
+  .control input{position:absolute;inset:0;opacity:0;}
+
+  /* dot radio */
+  .dot{width:20px;height:20px;border-radius:999px;border:2px solid #d9d1d7;
+    display:flex;align-items:center;justify-content:center;background:#fff;}
+  .dot-inner{width:10px;height:10px;border-radius:999px;background:transparent;
+    transition:.15s;transform:scale(.4);}
+  .radio-card.is-active .dot{border-color:var(--pink);}
+  .radio-card.is-active .dot-inner{background:var(--pink);transform:scale(1);}
+
+  /* checkbox */
+  .square{width:20px;height:20px;border-radius:6px;border:2px solid #d9d1d7;
+    display:flex;align-items:center;justify-content:center;background:#fff;
+    transition:.15s;}
+  .check{width:12px;height:12px;border-radius:3px;background:transparent;
+    transition:.15s;transform:scale(.8);}
+  .check-card.is-checked .square{border-color:var(--pink);background:#ffe6f1;}
+  .check-card.is-checked .check{background:var(--pink);transform:scale(1);}
+
+  .option-text{flex:1;min-width:0;}
+  .option-label{font-size:15px;font-weight:700;margin-bottom:2px;}
+  .option-desc{font-size:13px;color:var(--muted);line-height:1.7;}
+
+  .note{
+    display:flex;gap:6px;align-items:flex-start;
+    font-size:12px;color:var(--muted);line-height:1.7;
+    padding:9px 10px;border-radius:12px;background:#f6f3f5;
+    margin:2px 0 12px;
+  }
+  .note-icon{margin-top:2px;flex:0 0 auto;}
+  .note-icon svg{display:block;}
+
+  /* footer */
+  .footer{
+    background:transparent;
+    padding:12px 8px calc(36px + var(--safe-bottom));
+    margin-top:18px;
+  }
+  .row{display:flex;gap:12px;justify-content:space-between}
+  .btn{
+    flex:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    padding:16px 20px;
+    border-radius:14px;
+    border:1px solid #eee;
+    background:#fff;
+    color:#333;
+    box-shadow:0 10px 24px rgba(0,0,0,.05);
+    font-size:15px;
+    cursor:pointer;
+  }
+  .btn-prim{
+    background:var(--grad);
+    color:#fff;
+    border:none;
+    box-shadow:0 12px 28px rgba(240,141,176,.25);
+    font-weight:800;
+    letter-spacing:.02em;
+  }
+  .btn:active{transform:translateY(1px)}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="header">
+    <div class="logo" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="none"
+        stroke="var(--pink)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="8" width="18" height="12" rx="2"/>
+        <path d="M12 8v12"/><path d="M3 12h18"/>
+        <path d="M7.5 6a2.5 2.5 0 1 1 5 0v2h-5V6z"/>
+        <path d="M11.5 6a2.5 2.5 0 1 1 5 0v2h-5V6z"/>
+      </svg>
+    </div>
+    <div class="brand">えらべるギフト</div>
+  </header>
+
+  <main class="main">
+    <section class="title">
+      <h1>お届け方法の選択</h1>
+      <p class="lead">大切な人に選んでもらったギフトを<br>どの方法でお届けする予定ですか</p>
+    </section>
+
+    <!-- お届け方法 -->
+    <section class="block">
+      <h2 class="block-title">お届け方法を選択</h2>
+      <div class="option-group">
+        
+        <!-- 配送 -->
+        <label class="radio-card" data-value="shipping">
+          <div class="control">
+            <span class="dot"><span class="dot-inner"></span></span>
+            <input type="radio" name="delivery" value="shipping">
+          </div>
+          <div class="option-text">
+            <div class="option-label">配送でお届け</div>
+            <div class="option-desc">大切な人の住所へお届けする</div>
+          </div>
+        </label>
+
+        <!-- 手渡し -->
+        <label class="radio-card" data-value="hand">
+          <div class="control">
+            <span class="dot"><span class="dot-inner"></span></span>
+            <input type="radio" name="delivery" value="hand">
+          </div>
+          <div class="option-text">
+            <div class="option-label">手渡しでお届け</div>
+            <div class="option-desc">直接会ってお届けする</div>
+          </div>
+        </label>
+
+        <!-- 未定 -->
+        <label class="radio-card" data-value="undecided">
+          <div class="control">
+            <span class="dot"><span class="dot-inner"></span></span>
+            <input type="radio" name="delivery" value="undecided">
+          </div>
+          <div class="option-text">
+            <div class="option-label">まだ未定</div>
+            <div class="option-desc">あとで決める（今はスキップ）</div>
+          </div>
+        </label>
+      </div>
+    </section>
+
+    <!-- eギフト -->
+    <section class="block" id="egiftSection">
+      <h2 class="block-title">eギフトで送れる商品を選択</h2>
+
+      <p class="note">
+        <span class="note-icon">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none"
+            stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M12 8v1"/><path d="M11.5 11h1v5"/>
+          </svg>
+        </span>
+        <span>
+          eギフトは住所を知らなくても送れるギフトです。<br>
+          eギフト対応の商品を選んでください。
+        </span>
+      </p>
+
+      <div class="option-group" id="egiftList"></div>
+    </section>
+
+  </main>
+
+  <footer class="footer">
+    <div class="row">
+      <button class="btn" id="backBtn">戻る</button>
+      <button class="btn btn-prim" id="nextBtn">次へ</button>
+    </div>
+  </footer>
+</div>
+
+<script>
+/* ==== 画面高さ（iOS対策） ==== */
+function setVH(){
+  document.documentElement.style.setProperty("--vh", window.innerHeight * 0.01 + "px");
+}
+setVH();
+window.addEventListener("resize", setVH, { passive:true });
+window.addEventListener("orientationchange", setVH, { passive:true });
+
+/* ===== localStorage のキー ===== */
+const FORM_KEY     = "giftDraft_v1";      // create.html と共通
+const DELIVERY_KEY = "giftDelivery_v1";   // この画面用（配送方法＋eギフト選択）
+
+/* =============== URL パラメータ取得 =============== */
+const params = new URLSearchParams(location.search);
+
+/* DOM 取得 */
+const egiftSection = document.getElementById("egiftSection");
+const egiftListEl  = document.getElementById("egiftList");
+
+/* ------- localStorage 側の値も取得 ------- */
+let draftData = null;
+const draftRaw = localStorage.getItem(FORM_KEY);
+if(draftRaw){
+  try{ draftData = JSON.parse(draftRaw); }catch(e){}
+}
+
+let lsDelivery = null;
+let lsEgifts   = [];
+const deliveryRaw = localStorage.getItem(DELIVERY_KEY);
+if(deliveryRaw){
+  try{
+    const d = JSON.parse(deliveryRaw);
+    lsDelivery = d.delivery || null;
+    if(Array.isArray(d.egift)){
+      lsEgifts = d.egift.map(n => parseInt(n,10)).filter(n => !isNaN(n));
+    }
+  }catch(e){}
+}
+
+/* 選択済み delivery（URL 優先 → localStorage） */
+const savedDelivery = params.get("delivery") || lsDelivery;
+
+/* 選択済み egift（URL 優先 → localStorage） */
+let savedEgifts = (params.get("egift") || "")
+  .split(",")
+  .map(n => parseInt(n, 10))
+  .filter(n => !isNaN(n));
+
+if(!savedEgifts.length && lsEgifts.length){
+  savedEgifts = lsEgifts;
+}
+
+/* =============== お届け方法のラジオ復元 =============== */
+const radioCards = document.querySelectorAll(".radio-card");
+radioCards.forEach(card=>{
+  const input = card.querySelector("input[type=radio]");
+  const value = card.dataset.value;
+
+  if(savedDelivery){
+    if(value === savedDelivery){
+      input.checked = true;
+      card.classList.add("is-active");
+    }
+  } else {
+    // 初回デフォルトは shipping
+    if(value === "shipping"){
+      input.checked = true;
+      card.classList.add("is-active");
+    }
+  }
+
+  card.addEventListener("click", ()=>{
+    input.checked = true;
+    applyRadioState();
+  });
+});
+
+function applyRadioState(){
+  radioCards.forEach(card=>{
+    const input = card.querySelector("input[type=radio]");
+    card.classList.toggle("is-active", input.checked);
+  });
+  applyEgiftVisibility();
+}
+
+applyRadioState();
+
+/* =============== eギフト候補生成（URL or localStorage） =============== */
+function buildEgiftCards(){
+  const titles = [
+    params.get("title1") || (draftData && draftData.title1) || "",
+    params.get("title2") || (draftData && draftData.title2) || "",
+    params.get("title3") || (draftData && draftData.title3) || ""
+  ];
+
+  egiftListEl.innerHTML = "";
+
+  titles.forEach((t,i)=>{
+    if(!t || !t.trim()) return;
+
+    const label = document.createElement("label");
+    label.className = "check-card";
+    label.innerHTML = `
+      <div class="control">
+        <span class="square"><span class="check"></span></span>
+        <input type="checkbox" value="${i+1}">
+      </div>
+      <div class="option-text">
+        <div class="option-label">${t}</div>
+      </div>
+    `;
+
+    const input = label.querySelector("input");
+
+    // 選択済み eギフト復元
+    if(savedEgifts.includes(i+1)){
+      input.checked = true;
+      label.classList.add("is-checked");
+    }
+
+    label.addEventListener("click", (e)=>{
+      if(e.target.tagName.toLowerCase() !== "input"){
+        input.checked = !input.checked;
+      }
+      applyCheckState();
+    });
+
+    egiftListEl.appendChild(label);
+  });
+
+  // 商品が1つもない場合はセクションごと非表示
+  if(!egiftListEl.children.length){
+    egiftSection.style.display = "none";
+  }
+
+  applyCheckState();
+}
+
+function applyCheckState(){
+  document.querySelectorAll(".check-card").forEach(card=>{
+    const input = card.querySelector("input[type=checkbox]");
+    card.classList.toggle("is-checked", input.checked);
+  });
+}
+
+buildEgiftCards();
+
+/* =============== 配送方法に応じて eギフト表示 =============== */
+function applyEgiftVisibility(){
+  if(!egiftListEl.children.length){
+    egiftSection.style.display = "none";
+    return;
+  }
+  const val = document.querySelector("input[name=delivery]:checked")?.value;
+  if(val === "shipping" || val === "undecided"){
+    egiftSection.style.display = "";
+  } else {
+    egiftSection.style.display = "none";
+  }
+}
+applyEgiftVisibility();
+
+/* =============== 戻る =============== */
+document.getElementById("backBtn").addEventListener("click", ()=>{
+  // これまでの入力内容は localStorage に残っているので、クエリはそのままでもOK
+  location.href = "create.html?" + params.toString();
+});
+
+/* =============== 次へ =============== */
+document.getElementById("nextBtn").addEventListener("click", ()=>{
+  const selectedDelivery = document.querySelector("input[name=delivery]:checked")?.value || "";
+
+  const selectedEgifts = Array.from(
+    document.querySelectorAll("#egiftList input[type=checkbox]:checked")
+  ).map(i => i.value);
+
+  // URL パラメータにも詰めておく（既存フロー維持）
+  params.set("delivery", selectedDelivery);
+  params.set("egift", selectedEgifts.join(","));
+
+  // localStorage にも保存（confirm.html などから参照可能に）
+  const payload = {
+    delivery: selectedDelivery,
+    egift: selectedEgifts.map(n => parseInt(n,10)).filter(n => !isNaN(n))
+  };
+  try{
+    localStorage.setItem(DELIVERY_KEY, JSON.stringify(payload));
+  }catch(e){}
+
+  location.href = "loading.html?" + params.toString();
+});
+</script>
+</body>
+</html>
