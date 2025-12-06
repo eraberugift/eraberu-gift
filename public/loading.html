@@ -6,7 +6,6 @@
   <title>カタログを作成中 | えらべるギフト</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Kosugi+Maru&display=swap" rel="stylesheet">
-  <!-- 相対パスに変更（/public をルートとした assets フォルダ） -->
   <link rel="preload" href="assets/loadinggift.lottie" as="fetch" crossorigin>
 
   <style>
@@ -25,7 +24,7 @@
     body{
       margin:0;
       color:var(--ink);
-      font-family:"Hiragino Sans","Noto Sans JP","Kosugi Maru",system-ui,-apple-system,sans-serif;
+      font-family:"Hiragino Sans","Noto Sans JP","Kosugi Maru",system-ui;
       background: linear-gradient(180deg,var(--bg-top),var(--bg-bottom));
       min-height:100svh;
       overflow:hidden;
@@ -42,15 +41,6 @@
       padding:24px 20px calc(24px + var(--safe-bottom));
     }
 
-    dotlottie-player{
-      width:min(300px,60vw);
-      height:min(300px,60vw);
-      display:block;
-    }
-
-    #loadingText{
-      text-align:center;
-    }
     #loadingText h2{
       margin:0 0 8px;
       font-size:20px;
@@ -65,17 +55,10 @@
       color:var(--muted);
       animation:pulseFade 2s ease-in-out infinite;
     }
+
     @keyframes pulseFade{
       0%,100%{ opacity:0.6; }
       50%{ opacity:1; }
-    }
-
-    #hint{
-      margin-top:8px;
-      color:#b00020;
-      font:12px/1.4 system-ui;
-      text-align:center;
-      max-width:90vw;
     }
 
     .dots{
@@ -90,26 +73,20 @@
     }
   </style>
 </head>
+
 <body>
-  <div class="center-wrap" role="status" aria-live="polite">
+
+  <div class="center-wrap">
     <div id="playerHost" style="width:min(300px,60vw);height:min(300px,60vw)"></div>
 
     <div id="loadingText">
-      <h2>カタログを作成中<span class="dots" aria-hidden="true"></span></h2>
+      <h2>カタログを作成中<span class="dots"></span></h2>
       <p>心を込めて準備しています</p>
-      <div id="hint"></div>
     </div>
   </div>
 
-  <!-- Lottie と「…」の制御用スクリプト -->
+  <!-- ★ loading.js に全て統合したので、インラインスクリプトは削除 -->
   <script type="module" src="js/loading.js"></script>
-
-  <script>
-    // ここで confirm.html へ遷移するときに、クエリはそのまま引き継ぎ
-    setTimeout(()=>{
-      window.location.href = "confirm.html" + window.location.search;
-    }, 4000);
-  </script>
 
 </body>
 </html>

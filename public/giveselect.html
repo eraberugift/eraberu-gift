@@ -436,29 +436,38 @@ document.getElementById("backBtn").addEventListener("click", ()=>{
   location.href = "create.html?" + params.toString();
 });
 
-/* =============== 次へ =============== */
-document.getElementById("nextBtn").addEventListener("click", ()=>{
+document.getElementById("nextBtn").addEventListener("click", async () => {
   const selectedDelivery = document.querySelector("input[name=delivery]:checked")?.value || "";
 
   const selectedEgifts = Array.from(
     document.querySelectorAll("#egiftList input[type=checkbox]:checked")
-  ).map(i => i.value);
+  ).map(i => parseInt(i.value,10));
 
-  // URL パラメータにも詰めておく（既存フロー維持）
-  params.set("delivery", selectedDelivery);
-  params.set("egift", selectedEgifts.join(","));
-
-  // localStorage にも保存（confirm.html などから参照可能に）
+  // localStorage 保存
   const payload = {
     delivery: selectedDelivery,
-    egift: selectedEgifts.map(n => parseInt(n,10)).filter(n => !isNaN(n))
+    egift: selectedEgifts.filter(n => !isNaN(n)),
   };
-  try{
-    localStorage.setItem(DELIVERY_KEY, JSON.stringify(payload));
-  }catch(e){}
+  localStorage.setItem(DELIVERY_KEY, JSON.stringify(payload));
 
-  location.href = "loading.html?" + params.toString();
+  // --- catalogId 取得 ---
+  const catalogId =
+    new URLSearchParams(location.search).get("id") ||
+    localStorage.getItem("catalogId");
+
+  if (!catalogId) {
+    alert("catalogId が見つかりません。create.htmlからやり直してください。");
+    return;
+  }
+
+  // ==============================
+  //  ★ start_ogp は呼ばない！！ ★
+  // ==============================
+
+  window.location.href = "loading.html?id=" + encodeURIComponent(catalogId);
 });
+
+
 </script>
 </body>
 </html>

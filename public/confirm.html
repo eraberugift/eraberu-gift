@@ -467,7 +467,7 @@
 <!-- ▲ 編集モーダル ▲ -->
 
 <script>
-const FORM_KEY = "giftDraft_v1";
+const FORM_KEY = "giftDraft_enriched_v1";
 let draft = {};
 try{
   const raw = localStorage.getItem(FORM_KEY);
@@ -798,6 +798,7 @@ document.getElementById("prevBtn").onclick = () => {
 document.getElementById("nextBtn").onclick = () => {
   window.location.href = buildUrl("message.html");
 };
+
 </script>
 
 </body>

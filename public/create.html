@@ -99,63 +99,54 @@
       <p class="lead">大切な人に3つの商品から選んでもらえる<br>特別なギフトを作りましょう</p>
     </section>
 
-    <form
-    id="giftForm"
-    class="form-card"
-    action="https://hook.eu2.make.com/wsqbuvjclpr41aufniwan726z1yap9lx"
-    method="post"
-    >
+    <form id="giftForm" class="form-card">
 
-      <!-- 商品1 -->
       <div class="product-block">
         <div class="product-title">商品1</div>
-
         <div class="field">
           <div class="field-label">商品タイトル<span class="req">＊</span></div>
-          <input type="text" name="title1" placeholder="例：ふわふわタオル" required>
+          <input type="text" name="title1" required>
         </div>
-
         <div class="field">
           <div class="field-label">商品URL<span class="req">＊</span></div>
-          <input type="url" name="url1" placeholder="https://..." required>
+          <input type="url" name="url1" required>
         </div>
       </div>
 
-      <!-- 商品2 -->
       <div class="product-block">
         <div class="product-title">商品2</div>
         <div class="field">
           <div class="field-label">商品タイトル</div>
-          <input type="text" name="title2" placeholder="例：ふわふわタオル">
+          <input type="text" name="title2">
         </div>
         <div class="field">
           <div class="field-label">商品URL</div>
-          <input type="url" name="url2" placeholder="https://...">
+          <input type="url" name="url2">
         </div>
       </div>
 
-      <!-- 商品3 -->
       <div class="product-block">
         <div class="product-title">商品3</div>
         <div class="field">
           <div class="field-label">商品タイトル</div>
-          <input type="text" name="title3" placeholder="例：ふわふわタオル">
+          <input type="text" name="title3">
         </div>
         <div class="field">
           <div class="field-label">商品URL</div>
-          <input type="url" name="url3" placeholder="https://...">
+          <input type="url" name="url3">
         </div>
       </div>
+
     </form>
 
     <footer class="footer">
-      <button class="btn" type="submit" form="giftForm">カタログを作成する</button>
+      <button class="btn" form="giftForm">カタログを作成する</button>
     </footer>
   </main>
 </div>
 
 <script>
-/* ===== iOS実高さ対策 ===== */
+// ========= 1. iOS viewport =========
 function setVH(){
   const vh = window.innerHeight * 0.01;
   document.documentElement.style.setProperty('--vh', `${vh}px`);
@@ -163,120 +154,125 @@ function setVH(){
 setVH();
 window.addEventListener('resize', setVH);
 
-/* ===== localStorage 保存/読み込み ===== */
-
+// ========= 2. 草稿保存 =========
 const FORM_KEY = "giftDraft_v1";
+const DRAFT_URLS_KEY = "draftUrls";
+const CATALOG_ID_KEY = "catalogId";
 
-/* 保存（入力のたびに） */
 function saveDraft(){
-  const form = document.getElementById("giftForm");
-  const data = Object.fromEntries(new FormData(form).entries());
+  const data = Object.fromEntries(new FormData(document.getElementById("giftForm")).entries());
   localStorage.setItem(FORM_KEY, JSON.stringify(data));
 }
-
-/* 読み込み（画面表示時） */
 function loadDraft(){
   const saved = localStorage.getItem(FORM_KEY);
   if(!saved) return;
-
   const data = JSON.parse(saved);
-  Object.keys(data).forEach(key=>{
-    const input = document.querySelector(`[name="${key}"]`);
-    if(input) input.value = data[key];
+  Object.entries(data).forEach(([k,v])=>{
+    const input = document.querySelector(`[name="${k}"]`);
+    if(input) input.value = v;
   });
 }
-
-/* 初期ロード */
 loadDraft();
-
-/* 入力のたびに保存 */
-document.querySelectorAll("#giftForm input").forEach(input=>{
-  input.addEventListener("input", saveDraft);
+document.querySelectorAll("#giftForm input").forEach(i=>{
+  i.addEventListener("input", () => {
+    saveDraft();
+    checkUrlUpdate();
+  });
 });
 
-/* ===== URLパラメータ(id / preview)の引き継ぎ対応 ===== */
-(function(){
-  const src = new URLSearchParams(location.search);
-  const baseParams = new URLSearchParams();
+// ========= 3. Base64 UUID 生成 =========
+function generateBase64UUID() {
+  const uuid = crypto.randomUUID().replace(/-/g, "");
+  const bytes = Uint8Array.from(uuid.match(/.{2}/g).map((h) => parseInt(h, 16)));
+  return btoa(String.fromCharCode(...bytes))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=/g, "");
+}
 
-  const keepKeys = ["id", "preview"];
+// ========= 4. URL変更検知 → ID再生成 =========
+function getCurrentUrls() {
+  return {
+    url1: document.querySelector('[name="url1"]').value.trim(),
+    url2: document.querySelector('[name="url2"]').value.trim(),
+    url3: document.querySelector('[name="url3"]').value.trim(),
+  };
+}
 
-  keepKeys.forEach(key=>{
-    const v = src.get(key);
-    if(v !== null) baseParams.set(key, v);
-  });
+function checkUrlUpdate() {
+  const prev = JSON.parse(localStorage.getItem(DRAFT_URLS_KEY) || "{}");
+  const now = getCurrentUrls();
 
-  // フォーム送信時、action を書き換えて遷移
-  const form = document.getElementById("giftForm");
-  form.addEventListener("submit", (e)=>{
-    if([ ...baseParams ].length){
-      const qs = baseParams.toString();
-      form.action = "giveselect.html?" + qs;
-    }else{
-      form.action = "giveselect.html";
-    }
-  });
-})();
+  let changed = false;
+  for (const k of ["url1","url2","url3"]) {
+    if ((prev[k] || "") !== (now[k] || "")) changed = true;
+  }
 
-/* ====== Make Webhook 送信処理 ====== */
+  if (changed) {
+    // 新しいカタログ → ID再生成
+    const newId = generateBase64UUID();
+    localStorage.setItem(CATALOG_ID_KEY, newId);
+    localStorage.setItem(DRAFT_URLS_KEY, JSON.stringify(now));
+  }
+}
 
-const MAKE_WEBHOOK_URL = "https://hook.eu2.make.com/wsqbuvjclpr41aufniwan726z1yap9lx"; 
-// ↑↑ あなたの Make Webhook URL を入れてください
+// ========= 5. Make Webhook =========
+const API_ITEMS_INPUT = "/api/items_input";
 
 document.getElementById("giftForm").addEventListener("submit", async (e) => {
-  e.preventDefault(); // デフォルトの form 送信を止める
+  e.preventDefault();
 
   const form = document.getElementById("giftForm");
   const data = Object.fromEntries(new FormData(form).entries());
 
-  // カタログID（作成時に発行して保存）
-  let catalogId = localStorage.getItem("catalogId");
-  if (!catalogId) {
-    catalogId = "gift-" + Math.random().toString(36).slice(2, 10);
-    localStorage.setItem("catalogId", catalogId);
+  if (!data.title1 || !data.url1) {
+    alert("商品1のタイトルとURLは必須です。");
+    return;
   }
 
-  // Webhook に送るデータ
+  // --- カタログID（無ければ生成） ---
+  let catalogId = localStorage.getItem(CATALOG_ID_KEY);
+  if (!catalogId) {
+    catalogId = generateBase64UUID();
+    localStorage.setItem(CATALOG_ID_KEY, catalogId);
+  }
+
+  // --- URLの個数 ---
+  const urls = getCurrentUrls();
+  const urlCount = Object.values(urls).filter(v => v && v !== "").length;
+  localStorage.setItem("urlCount", urlCount);
+
+  // --- URLセットの草稿を確定保存 ---
+  localStorage.setItem(DRAFT_URLS_KEY, JSON.stringify(urls));
+
   const payload = {
-    catalogId: catalogId,
-    title1: data.title1 || "",
-    url1: data.url1 || "",
-    title2: data.title2 || "",
-    url2: data.url2 || "",
-    title3: data.title3 || "",
-    url3: data.url3 || ""
+    catalogId,
+    urlCount,
+    title1: data.title1, url1: data.url1,
+    title2: data.title2 || "", url2: data.url2 || "",
+    title3: data.title3 || "", url3: data.url3 || ""
   };
 
-  console.log("送信データ:", payload);
-
   try {
-    await fetch(MAKE_WEBHOOK_URL, {
+    const res = await fetch(API_ITEMS_INPUT, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     });
-    console.log("Make 送信成功");
+
+    if (!res.ok) {
+      alert("Make 連携でエラーが起きました。");
+      return;
+    }
+
+    // ---- 次ページへ（URLパラメータ不要）----
+    window.location.href = "giveselect.html";
+
   } catch (err) {
-    console.error("Make 送信エラー:", err);
+    console.error("fetch エラー:", err);
+    alert("通信エラーが発生しました。");
   }
-
-  /* ----→ 元々の遷移処理をここで継続 ---- */
-
-  const src = new URLSearchParams(location.search);
-  const params = new URLSearchParams();
-
-  ["id", "preview"].forEach(key => {
-    const v = src.get(key);
-    if (v !== null) params.set(key, v);
-  });
-
-  const next = params.toString()
-    ? "giveselect.html?" + params.toString()
-    : "giveselect.html";
-
-  window.location.href = next;
 });
-
 </script>
 
 </body>
