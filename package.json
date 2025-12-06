@@ -16,8 +16,7 @@
     "express": "^5.1.0",
     "helmet": "^8.1.0",
     "nanoid": "^5.1.6",
-    "zod": "^4.1.12",
-    "googleapis": "^131.0.0"
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
